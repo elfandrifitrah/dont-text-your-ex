@@ -366,6 +366,37 @@
       .notes ul { margin: 6px 0 0; padding-left: 20px; }
       .notes a { color: var(--accent-deep); }
       .notes .card { margin-bottom: 12px; }
+
+      /* ============ Live comments (Firebase) ============ */
+      .comment-form label { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); margin: 14px 0 6px; }
+      .comment-form label:first-of-type { margin-top: 4px; }
+      .nickname-row { display: flex; align-items: center; gap: 12px; }
+      .nickname-row .text-input { flex: 1; min-width: 0; }
+      .avatar-preview, .comment-avatar {
+        flex: none; width: 42px; height: 42px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 15px; font-weight: 800; letter-spacing: .01em;
+        background: var(--ink-3); user-select: none;
+      }
+      .comment-avatar { width: 40px; height: 40px; font-size: 14px; }
+      .comment-status { font-size: 13.5px; line-height: 1.5; margin: 10px 0 0; min-height: 20px; color: var(--ink-2); }
+      .comment-status.error { color: var(--accent-deep); font-weight: 600; }
+      .comment-status.ok { color: var(--ink-2); }
+      .comments-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; }
+      .comments-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
+      .comments-head .count { font-size: 13px; font-weight: 700; color: var(--ink-3); white-space: nowrap; }
+      .comment-list { list-style: none; margin: 6px 0 0; padding: 0; }
+      .comment-item { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+      .comment-item:first-child { border-top: none; }
+      .comment-main { flex: 1; min-width: 0; }
+      .comment-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 3px; }
+      .comment-name { font-size: 14.5px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+      .you-badge { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: var(--accent-tint); color: var(--accent-deep); border-radius: 999px; padding: 3px 8px; }
+      .comment-time { font-size: 12.5px; color: var(--ink-3); }
+      .comment-text { font-size: 14.5px; line-height: 1.55; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+      .comments-empty, .comments-loading { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); padding: 14px 0 4px; margin: 0; }
+      .btn[disabled] { opacity: .55; cursor: default; }
+      .btn[disabled]:active { transform: none; }
       @media (max-width: 520px) {
         .notes { padding: 22px 20px 34px; }
       }
@@ -705,7 +736,7 @@
       <section class="notes" aria-label="About this prototype">
         <div class="card">
           <h2>What you're looking at</h2>
-          <p>An interactive prototype of <strong>“Don't Text Your Ex”</strong> — the winning idea from the hackathon niche research: a 30-day no-contact coach whose hero feature is the SOS draft checker. Try the flow: personalize the plan on Today, paste a 2am draft into SOS, save the unsent letter to the Vault, and work the breakup-admin list. Everything runs in this page only; nothing is stored or sent.</p>
+          <p>An interactive prototype of <strong>“Don't Text Your Ex”</strong> — the winning idea from the hackathon niche research: a 30-day no-contact coach whose hero feature is the SOS draft checker. Try the flow: personalize the plan on Today, paste a 2am draft into SOS, save the unsent letter to the Vault, and work the breakup-admin list. The app itself runs in this page only and resets on reload — the feedback comments at the bottom are the one live part, stored so every visitor can read them.</p>
           <p style="margin-top:8px">The design follows the Appllama app-design rules: one locked accent color, semantic light/dark palettes, a fixed shape scale (pill actions, 16px cards, 12px inputs), native-style tab bar and bottom sheets, tabular numerals for counters, and motion kept under 300&nbsp;ms with Reduce Motion respected.</p>
           <p style="margin-top:8px"><strong>The artwork carries meaning, not decoration:</strong> on Today, chat bubbles dissolve behind a person walking toward sunrise (letting go); in SOS, an urge-wave diagram shows the peak at ~45 seconds and the fade by 90; in Plan, a plant moves from wilted in cracked earth to bloom across the four phases — Wilt, Root, Bud, Bloom; and in the Vault, a heart mended with gold kintsugi seams stands for “mended, not erased.”</p>
         </div>
@@ -717,6 +748,36 @@
             <li><strong>Why it's a one-player product:</strong> the customer is 18–35, in the first 0–14 days after a breakup, phone in hand late at night — no partner needs to join, no bank linking, no app-store review (web-first).</li>
             <li><strong>Honest caveats:</strong> the breakup-coach space is crowded at the generic level; the research rates confidence “moderate-high” that this is the best of the niches evaluated, “moderate” that it wins the hackathon. Breakup search demand is season-free (“how to get over a breakup” search index ranges only 87–112 across the year, per <a href="https://movingonwell.com/" target="_blank" rel="noopener">movingonwell.com</a>).</li>
           </ul>
+        </div>
+        <div class="card" id="commentsCard">
+          <p class="kicker" style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px">Demo feedback · Live</p>
+          <h2>Leave your take on this demo</h2>
+          <p>Critique, advice, or an idea to make it better — it all helps. No login, no account. Just pick a nickname: yours gets its own colour and initials below, so everyone can tell commenters apart.</p>
+
+          <form class="comment-form" id="commentForm" novalidate>
+            <label for="nicknameInput">Your nickname</label>
+            <div class="nickname-row">
+              <span class="avatar-preview" id="avatarPreview" aria-hidden="true">?</span>
+              <input class="text-input" id="nicknameInput" type="text" maxlength="30" autocomplete="off" placeholder="e.g. Maya, NightOwl, Sam R." />
+            </div>
+            <div class="field-note"><span>1–30 characters · pick one that's yours</span><span class="tnum" id="nicknameCount">0 / 30</span></div>
+
+            <label for="commentInput">Your comment</label>
+            <textarea id="commentInput" rows="4" maxlength="1000" placeholder="What works? What doesn't? What would you change, add, or cut?"></textarea>
+            <div class="field-note"><span>Be specific — one clear point beats a paragraph of praise</span><span class="tnum" id="commentCount">0 / 1000</span></div>
+
+            <button class="btn btn-accent" type="submit" id="postCommentBtn" style="margin-top:14px">Post comment</button>
+            <p class="comment-status" id="commentStatus" role="status" aria-live="polite">Connecting to the live comments…</p>
+          </form>
+
+          <div class="comments-head">
+            <h3>What visitors are saying</h3>
+            <span class="count tnum" id="commentTotal"></span>
+          </div>
+          <p class="comments-loading" id="commentsLoading">Loading comments…</p>
+          <p class="comments-empty" id="commentsEmpty" hidden>No comments yet. Be the first to leave a critique, a piece of advice, or an idea.</p>
+          <ul class="comment-list" id="commentList"></ul>
+          <p class="comment-status error" id="commentsError" role="alert" hidden></p>
         </div>
       </section>
     </div>
@@ -1171,6 +1232,212 @@
         /* ---------------- Init ---------------- */
         setDay(6);
         updateFreeNotes();
+      })();
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        var nicknameInput = document.getElementById("nicknameInput");
+        var commentInput = document.getElementById("commentInput");
+        var nicknameCount = document.getElementById("nicknameCount");
+        var commentCount = document.getElementById("commentCount");
+        var avatarPreview = document.getElementById("avatarPreview");
+        var form = document.getElementById("commentForm");
+        var postBtn = document.getElementById("postCommentBtn");
+        var statusEl = document.getElementById("commentStatus");
+        var listEl = document.getElementById("commentList");
+        var loadingEl = document.getElementById("commentsLoading");
+        var emptyEl = document.getElementById("commentsEmpty");
+        var errorEl = document.getElementById("commentsError");
+        var totalEl = document.getElementById("commentTotal");
+        if (!form || !listEl) return;
+
+        var PALETTE = ["#d2431b", "#147a6b", "#256d9b", "#374e7a", "#7d3c2e", "#4a6741", "#95506b", "#9a6a0a", "#a15e2b", "#5d6d2f"];
+        function hashStr(s) {
+          var h = 5381;
+          for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+          return Math.abs(h);
+        }
+        function colorFor(name) { return PALETTE[hashStr(name.toLowerCase()) % PALETTE.length]; }
+        function initialsFor(name) {
+          var clean = name.trim().replace(/\s+/g, " ");
+          if (!clean) return "?";
+          var parts = clean.split(" ");
+          if (parts.length > 1) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+          return clean.slice(0, 2).toUpperCase();
+        }
+        function escapeTime(d) {
+          if (!d) return "Just now";
+          var diff = Date.now() - d.getTime();
+          var mins = Math.floor(diff / 60000);
+          if (mins < 1) return "Just now";
+          if (mins < 60) return mins + (mins === 1 ? " min ago" : " mins ago");
+          var hrs = Math.floor(mins / 60);
+          if (hrs < 24) return hrs + (hrs === 1 ? " hr ago" : " hrs ago");
+          var days = Math.floor(hrs / 24);
+          if (days < 7) return days + (days === 1 ? " day ago" : " days ago");
+          return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+        }
+
+        function refreshPreview() {
+          var name = nicknameInput.value;
+          nicknameCount.textContent = name.length + " / 30";
+          commentCount.textContent = commentInput.value.length + " / 1000";
+          var trimmed = name.trim();
+          avatarPreview.textContent = initialsFor(trimmed);
+          avatarPreview.style.background = trimmed ? colorFor(trimmed) : "";
+        }
+        nicknameInput.addEventListener("input", refreshPreview);
+        commentInput.addEventListener("input", refreshPreview);
+        refreshPreview();
+
+        function setStatus(msg, kind) {
+          statusEl.textContent = msg;
+          statusEl.className = "comment-status" + (kind ? " " + kind : "");
+        }
+        function showListError(msg) {
+          errorEl.textContent = msg;
+          errorEl.hidden = !msg;
+          if (msg) loadingEl.hidden = true;
+        }
+
+        var myIds = {};
+        var myNickname = "";
+
+        /* ---- Firebase (public web config — protection is the Firestore rules, not secrecy) ---- */
+        var firebaseConfig = {
+          apiKey: "AIzaSyADgu7agIhlfTu3c0IAgK_k8uf55xCXl2s",
+          authDomain: "dont-text-your-ex.firebaseapp.com",
+          projectId: "dont-text-your-ex",
+          storageBucket: "dont-text-your-ex.firebasestorage.app",
+          messagingSenderId: "513866182205",
+          appId: "1:513866182205:web:865bee33b150ee27a08454"
+        };
+
+        var db = null, authReady = null, ready = false;
+        if (typeof firebase === "undefined" || !firebase.initializeApp) {
+          setStatus("Comments can't load right now — check your connection and refresh.", "error");
+          showListError("The comment service didn't load. Your reading of the demo is unaffected — please refresh to try the comments again.");
+        } else {
+          try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            var auth = firebase.auth();
+            authReady = auth.signInAnonymously().then(function () { return auth.currentUser; });
+            authReady.then(function () {
+              ready = true;
+              setStatus("You're in — no login needed. Post as your nickname.", "ok");
+            }).catch(function () {
+              setStatus("Couldn't start an anonymous session, so posting is paused. Reading still works.", "error");
+            });
+
+            db.collection("comments").orderBy("createdAt", "desc").limit(100)
+              .onSnapshot(function (snap) {
+                loadingEl.hidden = true;
+                showListError("");
+                listEl.innerHTML = "";
+                totalEl.textContent = snap.size === 0 ? "" : snap.size + (snap.size === 1 ? " comment" : " comments");
+                emptyEl.hidden = snap.size !== 0;
+                snap.forEach(function (doc) {
+                  var data = doc.data() || {};
+                  var name = typeof data.nickname === "string" && data.nickname.trim() ? data.nickname.trim() : "Anonymous";
+                  var text = typeof data.text === "string" ? data.text : "";
+                  var when = null;
+                  try { when = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null; } catch (e) { when = null; }
+
+                  var li = document.createElement("li");
+                  li.className = "comment-item";
+
+                  var av = document.createElement("span");
+                  av.className = "comment-avatar";
+                  av.setAttribute("aria-hidden", "true");
+                  av.textContent = initialsFor(name);
+                  av.style.background = colorFor(name);
+
+                  var main = document.createElement("div");
+                  main.className = "comment-main";
+
+                  var meta = document.createElement("div");
+                  meta.className = "comment-meta";
+                  var nameEl = document.createElement("span");
+                  nameEl.className = "comment-name";
+                  nameEl.textContent = name;
+                  meta.appendChild(nameEl);
+                  if (myIds[doc.id] || (myNickname && name === myNickname && myIds.__pending === name)) {
+                    var badge = document.createElement("span");
+                    badge.className = "you-badge";
+                    badge.textContent = "You";
+                    meta.appendChild(badge);
+                  }
+                  var timeEl = document.createElement("span");
+                  timeEl.className = "comment-time";
+                  timeEl.textContent = escapeTime(when);
+                  meta.appendChild(timeEl);
+
+                  var body = document.createElement("p");
+                  body.className = "comment-text";
+                  body.textContent = text;
+
+                  main.appendChild(meta);
+                  main.appendChild(body);
+                  li.appendChild(av);
+                  li.appendChild(main);
+                  listEl.appendChild(li);
+                });
+              }, function (err) {
+                loadingEl.hidden = true;
+                showListError("Comments couldn't be loaded right now. Please refresh in a moment.");
+              });
+          } catch (e) {
+            setStatus("Comments can't load right now — check your connection and refresh.", "error");
+            showListError("The comment service didn't load. Please refresh to try again.");
+          }
+        }
+
+        form.addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var nickname = nicknameInput.value.trim().replace(/\s+/g, " ");
+          var text = commentInput.value.trim();
+          if (nickname.length < 1 || nickname.length > 30) {
+            setStatus("Pick a nickname first — 1 to 30 characters, so people can tell your comments apart.", "error");
+            nicknameInput.focus();
+            return;
+          }
+          if (text.length < 1 || text.length > 1000) {
+            setStatus("Write a comment first — even one clear sentence helps.", "error");
+            commentInput.focus();
+            return;
+          }
+          if (!db || !authReady) {
+            setStatus("Comments aren't connected yet — please refresh and try again.", "error");
+            return;
+          }
+          postBtn.disabled = true;
+          postBtn.textContent = "Posting…";
+          setStatus("Posting your comment…", "");
+          authReady.then(function () {
+            return db.collection("comments").add({
+              nickname: nickname,
+              text: text,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }).then(function (ref) {
+            if (ref && ref.id) myIds[ref.id] = true;
+            myNickname = nickname;
+            commentInput.value = "";
+            refreshPreview();
+            setStatus("Posted — your comment is live below for everyone to see.", "ok");
+          }).catch(function () {
+            setStatus("That didn't post. Check your connection and try again — your text is still in the box.", "error");
+          }).then(function () {
+            postBtn.disabled = false;
+            postBtn.textContent = "Post comment";
+          });
+        });
       })();
     </script>
   </body>
