@@ -1477,5 +1477,59 @@
         });
       })();
     </script>
+    <script>
+      (function () {
+        try {
+          var KEY = "dtye_visit_session_id";
+          var sessionId = null;
+          try { sessionId = sessionStorage.getItem(KEY); } catch (e) { return; }
+          if (sessionId) return;
+          try {
+            if (window.crypto && typeof window.crypto.randomUUID === "function") {
+              sessionId = window.crypto.randomUUID();
+            } else if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+              var buf = new Uint8Array(16);
+              window.crypto.getRandomValues(buf);
+              sessionId = Array.prototype.map.call(buf, function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+            } else {
+              sessionId = "s-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + "-" + Math.random().toString(36).slice(2);
+            }
+          } catch (e) {
+            sessionId = "s-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+          }
+          try { sessionStorage.setItem(KEY, sessionId); } catch (e) { return; }
+          if (typeof firebase === "undefined" || !firebase.firestore || !firebase.auth) return;
+          var written = false;
+          function writeVisit() {
+            if (written) return;
+            written = true;
+            try {
+              var db = firebase.firestore();
+              var w = 0, h = 0;
+              try { w = window.screen ? window.screen.width || 0 : 0; h = window.screen ? window.screen.height || 0 : 0; } catch (e) {}
+              db.collection("visits").add({
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                sessionId: sessionId,
+                userAgent: navigator.userAgent || "",
+                language: navigator.language || "",
+                referrer: document.referrer || "",
+                screen: w + "x" + h,
+                path: window.location.pathname || "/"
+              }).catch(function () {});
+            } catch (e) {}
+          }
+          try {
+            var auth = firebase.auth();
+            if (auth.currentUser) { writeVisit(); return; }
+            var unsub = auth.onAuthStateChanged(function (user) {
+              if (user) {
+                try { if (typeof unsub === "function") unsub(); } catch (e) {}
+                writeVisit();
+              }
+            });
+          } catch (e) {}
+        } catch (e) {}
+      })();
+    </script>
   </body>
 </html>
