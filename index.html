@@ -112,10 +112,12 @@
       .view {
         position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
         padding: 6px 20px 28px; display: none; scrollbar-width: none;
+        opacity: 0; transform: translateY(6px);
+        transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1), transform 180ms cubic-bezier(0.23, 1, 0.32, 1), display 180ms allow-discrete;
       }
       .view::-webkit-scrollbar { display: none; }
-      .view.active { display: block; animation: viewIn 0.22s cubic-bezier(0.23, 1, 0.32, 1); }
-      @keyframes viewIn { from { opacity: 0; } to { opacity: 1; } }
+      .view.active { display: block; opacity: 1; transform: translateY(0); }
+      @starting-style { .view.active { opacity: 0; transform: translateY(6px); } }
 
       .card {
         background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
@@ -130,7 +132,7 @@
       .streak-num { font-size: 56px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
       .streak-num small { font-size: 17px; font-weight: 600; color: var(--ink-2); letter-spacing: 0; }
       .progress { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 14px; }
-      .progress > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+      .progress > i { display: block; height: 100%; width: 100%; background: var(--accent); border-radius: 999px; transform: scaleX(var(--p, 0.2)); transform-origin: left center; transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
 
       /* Buttons — pills only */
       .btn {
@@ -179,7 +181,8 @@
 
       /* Verdict */
       .verdict { display: none; }
-      .verdict.show { display: block; animation: viewIn 0.25s cubic-bezier(0.23, 1, 0.32, 1); }
+      .verdict.show { display: block; animation: verdictIn 0.22s cubic-bezier(0.23, 1, 0.32, 1); }
+      @keyframes verdictIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       .verdict-head { display: flex; gap: 14px; align-items: flex-start; }
       .verdict-icon {
         width: 46px; height: 46px; flex: none; border-radius: 50%;
@@ -293,7 +296,7 @@
       /* ============ Sheets ============ */
       .backdrop {
         position: absolute; inset: 0; background: rgba(20, 13, 8, 0.45);
-        opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 30;
+        opacity: 0; pointer-events: none; transition: opacity 0.25s cubic-bezier(0.23, 1, 0.32, 1); z-index: 30;
       }
       .backdrop.show { opacity: 1; pointer-events: auto; }
       .sheet {
@@ -326,7 +329,7 @@
         position: absolute; left: 50%; bottom: 108px; transform: translate(-50%, 16px); z-index: 40;
         background: var(--ink); color: var(--phone-bg); font-size: 14px; font-weight: 600;
         padding: 11px 18px; border-radius: 999px; opacity: 0; pointer-events: none;
-        transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.23, 1, 0.32, 1);
+        transition: opacity 0.22s cubic-bezier(0.23, 1, 0.32, 1), transform 0.22s cubic-bezier(0.23, 1, 0.32, 1);
         max-width: calc(100% - 40px); text-align: center; box-shadow: 0 10px 26px rgba(0,0,0,0.25);
       }
       .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -428,8 +431,31 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .view.active, .verdict.show { animation: none; }
-        .btn, .chip, .sheet, .backdrop, .toast, .progress > i { transition: none; }
+        .view {
+          transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1), display 120ms allow-discrete;
+          transform: none;
+        }
+        .view.active { transform: none; }
+        @starting-style { .view.active { opacity: 0; transform: none; } }
+        .verdict.show { animation: verdictReducedIn 120ms cubic-bezier(0.23, 1, 0.32, 1); }
+        @keyframes verdictReducedIn { from { opacity: 0; } to { opacity: 1; } }
+        .btn, .chip {
+          transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1), background-color 120ms cubic-bezier(0.23, 1, 0.32, 1), color 120ms cubic-bezier(0.23, 1, 0.32, 1), border-color 120ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .btn:active, .chip:active { transform: none; }
+        .site-footer .github-link {
+          transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1), background-color 120ms cubic-bezier(0.23, 1, 0.32, 1), color 120ms cubic-bezier(0.23, 1, 0.32, 1), border-color 120ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .site-footer .github-link:active { transform: none; }
+        .sheet {
+          transform: none; opacity: 0; pointer-events: none;
+          transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .sheet.show { transform: none; opacity: 1; pointer-events: auto; }
+        .backdrop { transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1); }
+        .toast { transform: translate(-50%, 0); transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1); }
+        .toast.show { transform: translate(-50%, 0); }
+        .progress > i { transition: none; }
         .breath-circle { transition: none; }
       }
     </style>
@@ -471,7 +497,7 @@
                 <div class="streak-hero">
                   <div class="streak-num tnum"><span id="dayNum">6</span><small> / 30 days</small></div>
                 </div>
-                <div class="progress" role="progressbar" aria-label="Plan progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="6" id="planProgress"><i style="width:20%"></i></div>
+                <div class="progress" role="progressbar" aria-label="Plan progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="6" id="planProgress"><i style="--p:0.2"></i></div>
                 <p style="margin-top:12px" id="streakLine">Six days of not reopening the wound. The urge peaks at night — that's what the SOS check is for.</p>
               </div>
 
@@ -935,7 +961,7 @@
           $("#streakChipNum").textContent = state.day + (state.day === 1 ? " day" : " days");
           var bar = $("#planProgress");
           bar.setAttribute("aria-valuenow", state.day);
-          bar.querySelector("i").style.width = (state.day / 30 * 100) + "%";
+          bar.querySelector("i").style.setProperty("--p", state.day / 30);
           var entry = planDays[state.day - 1];
           $("#focusTitle").textContent = entry[0];
           $("#focusBody").textContent = entry[1];
@@ -1131,7 +1157,7 @@
           var vc = $("#verdictCard");
           vc.classList.add("show");
           updateFreeNotes();
-          vc.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          vc.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
         });
 
         $("#saveLetterBtn").addEventListener("click", function () {
@@ -1182,6 +1208,7 @@
         renderLetters();
 
         /* ---------------- Breathing ---------------- */
+        var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         var breath = { running: false, remaining: 90, timer: null };
         var circle = $("#breathCircle");
         function fmtTime(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
@@ -1192,9 +1219,9 @@
           var elapsed = 90 - breath.remaining;
           var cycle = elapsed % 12; /* 4 in · 4 hold · 4 out */
           var phaseEl = $("#breathPhase");
-          if (cycle < 4) { phaseEl.textContent = "Breathe in"; circle.style.setProperty("--bs", 1); }
+          if (cycle < 4) { phaseEl.textContent = "Breathe in"; if (!reduceMotion) circle.style.setProperty("--bs", 1); }
           else if (cycle < 8) { phaseEl.textContent = "Hold"; }
-          else { phaseEl.textContent = "Let it go"; circle.style.setProperty("--bs", 0.72); }
+          else { phaseEl.textContent = "Let it go"; if (!reduceMotion) circle.style.setProperty("--bs", 0.72); }
         }
         function stopBreath(done) {
           clearInterval(breath.timer);
@@ -1206,7 +1233,7 @@
           $("#breathHint").textContent = done
             ? "Ninety seconds, done. Re-read your draft — notice it has less power now?"
             : "Tap start when you're ready.";
-          circle.style.setProperty("--bs", 0.72);
+          if (!reduceMotion) circle.style.setProperty("--bs", 0.72);
           if (done) toast("Reset complete. The draft can wait — probably forever.");
         }
         $("#breathBtn").addEventListener("click", function () {
@@ -1219,7 +1246,7 @@
           breathTick();
         });
         $("#jumpBreath").addEventListener("click", function () {
-          $("#breathCard").scrollIntoView({ behavior: "smooth", block: "center" });
+          $("#breathCard").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
         });
 
         /* ---------------- Admin checklist ---------------- */
