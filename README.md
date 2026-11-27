@@ -44,7 +44,7 @@ Powered by Firebase (Firestore + anonymous sign-in) on the free Spark plan. The 
 
 ## Price concept
 
-**$29 one-time** ($19 founding offer for the first 50). First SOS check free. This demo is a prototype — it takes no payments and stores nothing except the comments above.
+**$29 one-time** ($19 founding offer for the first 50). First SOS check free. This demo is a prototype — it takes no payments. Comments live in Firebase. Your streak, mood, vault, and checklist stay in this browser so a refresh does not wipe the 30 days.
 
 ## How it's built
 
@@ -60,7 +60,7 @@ Open `index.html` in a browser, or visit the live demo linked above.
 
 ### Multiplatform upgrade (in progress)
 
-Expo (React Native) app for **web + iOS + Android** lives in `apps/mobile/`. Firestore security rules live in `firebase/`. The static GitHub Pages demo at the repo root stays until an explicit cutover.
+Expo (React Native) app for **web + iOS + Android** lives in `apps/mobile/`. Today, Plan, SOS, Vault, and Checklist work there without an account: progress is saved on the device, and the SOS check never leaves it. Email sign-in is not connected yet. Firestore security rules live in `firebase/`. The static GitHub Pages demo at the repo root stays until an explicit cutover.
 
 ```bash
 cd apps/mobile

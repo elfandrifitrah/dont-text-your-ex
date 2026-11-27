@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { CrisisNote } from '@/components/CrisisNote';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { CRISIS_COPY } from '@/src/lib/crisis';
 
 type Props = {
   title: string;
@@ -20,6 +20,7 @@ export function Screen({ title, subtitle, children, showCrisisFooter }: Props) {
     <ScrollView
       style={[styles.scroll, { backgroundColor: c.background }]}
       contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
     >
       <Text style={[styles.title, { color: c.text }]}>{title}</Text>
       {subtitle ? (
@@ -27,7 +28,9 @@ export function Screen({ title, subtitle, children, showCrisisFooter }: Props) {
       ) : null}
       <View style={styles.body}>{children}</View>
       {showCrisisFooter ? (
-        <Text style={[styles.crisis, { color: c.crisis }]}>{CRISIS_COPY}</Text>
+        <View style={styles.crisis}>
+          <CrisisNote />
+        </View>
       ) : null}
     </ScrollView>
   );
@@ -39,5 +42,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', letterSpacing: -0.3 },
   subtitle: { marginTop: 6, fontSize: 15, lineHeight: 22 },
   body: { marginTop: 20, gap: 12 },
-  crisis: { marginTop: 28, fontSize: 12, lineHeight: 18 },
+  crisis: { marginTop: 28 },
 });

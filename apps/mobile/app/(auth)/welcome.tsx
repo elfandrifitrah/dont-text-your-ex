@@ -1,57 +1,48 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { CrisisNote } from '@/components/CrisisNote';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { isFirebaseConfigured } from '@/src/lib/firebase';
-import { CRISIS_COPY } from '@/src/lib/crisis';
+
+function leaveAuth() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/(tabs)');
+}
 
 export default function WelcomeScreen() {
   const c = Colors[useColorScheme()];
-  const configured = isFirebaseConfigured();
 
   return (
     <View style={[styles.wrap, { backgroundColor: c.background }]}>
       <Text style={[styles.brand, { color: c.accent }]}>Don't Text Your Ex</Text>
       <Text style={[styles.headline, { color: c.text }]}>
-        A 30-day no-contact coach. Save your streak across phone and web.
+        A 30-day no-contact coach. Your streak, vault, and checklist stay on this device.
       </Text>
       <Text style={[styles.body, { color: c.textMuted }]}>
-        Phase 1 stubs — wiring to Firebase Auth lands in Phase 2. Guest mode will
-        use anonymous auth with optional email upgrade for comments and sync.
+        No account needed for the 2am draft. Sign-in for a second phone comes later — closing the
+        app does not wipe today.
       </Text>
 
-      {!configured ? (
-        <Text style={[styles.warn, { color: c.accentDeep }]}>
-          Firebase env not set yet. Copy `.env.example` → `.env` with your
-          restricted web config before enabling live auth.
-        </Text>
-      ) : null}
-
+      <Pressable
+        accessibilityRole="button"
+        style={[styles.primary, { backgroundColor: c.accent }]}
+        onPress={leaveAuth}
+      >
+        <Text style={styles.primaryLabel}>Continue on this device</Text>
+      </Pressable>
       <Link href="/(auth)/sign-in" asChild>
-        <Pressable style={[styles.primary, { backgroundColor: c.accent }]}>
-          <Text style={styles.primaryLabel}>Sign in</Text>
+        <Pressable style={[styles.secondary, { borderColor: c.line }]}>
+          <Text style={[styles.secondaryLabel, { color: c.text }]}>Sign in</Text>
         </Pressable>
       </Link>
       <Link href="/(auth)/sign-up" asChild>
-        <Pressable style={[styles.secondary, { borderColor: c.line }]}>
-          <Text style={[styles.secondaryLabel, { color: c.text }]}>
-            Create account
-          </Text>
+        <Pressable style={styles.guest}>
+          <Text style={[styles.guestLabel, { color: c.textMuted }]}>Create account</Text>
         </Pressable>
       </Link>
-      <Pressable
-        style={styles.guest}
-        onPress={() => {
-          // Stub: Phase 2 calls signInAnonymously() then router.replace('/(tabs)')
-        }}
-      >
-        <Text style={[styles.guestLabel, { color: c.textMuted }]}>
-          Continue as guest (stub)
-        </Text>
-      </Pressable>
 
-      <Text style={[styles.crisis, { color: c.crisis }]}>{CRISIS_COPY}</Text>
+      <CrisisNote />
     </View>
   );
 }
@@ -61,7 +52,6 @@ const styles = StyleSheet.create({
   brand: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
   headline: { fontSize: 26, fontWeight: '700', lineHeight: 32, marginTop: 4 },
   body: { fontSize: 15, lineHeight: 22, marginBottom: 8 },
-  warn: { fontSize: 13, lineHeight: 18 },
   primary: {
     marginTop: 8,
     borderRadius: 14,
@@ -76,7 +66,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   secondaryLabel: { fontWeight: '600', fontSize: 16 },
-  guest: { paddingVertical: 12, alignItems: 'center' },
+  guest: { paddingVertical: 8, alignItems: 'center' },
   guestLabel: { fontSize: 15, fontWeight: '600' },
-  crisis: { marginTop: 20, fontSize: 11, lineHeight: 16 },
 });
