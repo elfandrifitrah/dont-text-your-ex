@@ -1,23 +1,58 @@
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import {
+  authErrorMessage,
+  requestPasswordReset,
+  signInWithEmail,
+} from '@/src/lib/auth';
 
 export default function SignInScreen() {
   const c = Colors[useColorScheme()];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState(
-    'Stub only — Phase 2 wires signInWithEmailAndPassword.',
-  );
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+
+  async function onSignIn() {
+    setBusy(true);
+    setStatus('');
+    try {
+      await signInWithEmail(email, password);
+      router.replace('/(tabs)');
+    } catch (err) {
+      setStatus(authErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onReset() {
+    if (!email.trim()) {
+      setStatus('Enter your email above, then tap reset.');
+      return;
+    }
+    setBusy(true);
+    setStatus('');
+    try {
+      await requestPasswordReset(email);
+      setStatus('Password reset email sent — check your inbox.');
+    } catch (err) {
+      setStatus(authErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <View style={[styles.wrap, { backgroundColor: c.background }]}>
@@ -49,19 +84,32 @@ export default function SignInScreen() {
         ]}
       />
       <Pressable
-        style={[styles.primary, { backgroundColor: c.accent }]}
-        onPress={() =>
-          setStatus(
-            'Not connected yet. After Phase 2 this signs in and opens Today.',
-          )
-        }
+        style={[styles.primary, { backgroundColor: c.accent, opacity: busy ? 0.7 : 1 }]}
+        onPress={onSignIn}
+        disabled={busy}
       >
-        <Text style={styles.primaryLabel}>Sign in</Text>
+        {busy ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.primaryLabel}>Sign in</Text>
+        )}
       </Pressable>
-      <Text style={[styles.status, { color: c.textMuted }]}>{status}</Text>
+      <Pressable onPress={onReset} disabled={busy} style={{ paddingVertical: 8 }}>
+        <Text style={{ color: c.textMuted, fontWeight: '600' }}>
+          Forgot password? Send reset email
+        </Text>
+      </Pressable>
+      {status ? (
+        <Text style={[styles.status, { color: c.textMuted }]}>{status}</Text>
+      ) : null}
       <Link href="/(auth)/sign-up" style={{ marginTop: 8 }}>
         <Text style={{ color: c.accent, fontWeight: '600' }}>
           Need an account? Sign up
+        </Text>
+      </Link>
+      <Link href="/(auth)/upgrade" style={{ marginTop: 8 }}>
+        <Text style={{ color: c.textMuted, fontWeight: '600' }}>
+          Guest? Upgrade to email
         </Text>
       </Link>
     </View>
@@ -83,6 +131,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   primaryLabel: { color: '#fff', fontWeight: '700', fontSize: 16 },
   status: { fontSize: 13, lineHeight: 18, marginTop: 8 },

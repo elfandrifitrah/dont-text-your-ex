@@ -1,12 +1,15 @@
 rules_version = '2';
 
-// Don't Text Your Ex — Phase 1 rules (review before deploy).
+// Don't Text Your Ex — Phase 2 rules.
 // Deny by default. No privileged/admin client paths.
-// Deploy: firebase deploy --only firestore:rules (from repo, with project access).
 //
-// WARNING: Deploying these rules will break the legacy index.html comment/visit
-// writers until that page is updated to send `uid` and stop writing `visits`.
-// Coordinate demo cutover (Phase 2) before production deploy.
+// Deploy AFTER this PR is live on GitHub Pages (legacy index.html now writes
+// comments.uid and no longer writes visits):
+//
+//   cd firebase && firebase deploy --only firestore:rules,firestore:indexes
+//
+// Also enable Email/Password in Firebase Console → Authentication → Sign-in method.
+// Anonymous sign-in must stay enabled for the demo + guest path.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -49,7 +52,8 @@ service cloud.firestore {
             || (request.resource.data.currentDay is int
                 && request.resource.data.currentDay >= 1
                 && request.resource.data.currentDay <= 30))
-        && request.resource.data.createdAt == resource.data.createdAt;
+        && (!('createdAt' in resource.data)
+            || request.resource.data.createdAt == resource.data.createdAt);
       allow delete: if isOwner(uid);
 
       match /checkIns/{dateId} {
@@ -83,14 +87,16 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
-    // ---- checklistProgress/{uid} (flat alt to users/{uid}/checklist) ----
+    // ---- checklistProgress/{uid} ----
     match /checklistProgress/{uid} {
-      allow read, write: if isOwner(uid)
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
         && request.resource.data.uid == uid;
+      allow delete: if isOwner(uid);
     }
 
     // ---- comments/{commentId} ----
-    // Public read for the demo feed. Create requires auth + uid ownership + length limits.
+    // Public read. Create requires auth + uid ownership + length limits.
     match /comments/{commentId} {
       allow read: if true;
 
@@ -102,24 +108,26 @@ service cloud.firestore {
         && (!('hidden' in request.resource.data) || request.resource.data.hidden == false);
 
       allow update: if signedIn()
+        && resource.data.keys().hasAll(['uid'])
         && resource.data.uid == request.auth.uid
         && request.resource.data.uid == resource.data.uid
         && onlyKeys(['uid', 'nickname', 'text', 'createdAt', 'hidden'])
         && stringInRange(request.resource.data.nickname, 1, 30)
         && stringInRange(request.resource.data.text, 1, 1000)
         && request.resource.data.createdAt == resource.data.createdAt
-        // Clients cannot flip hidden (moderation is admin/server-only later)
         && request.resource.data.hidden == resource.data.get('hidden', false);
 
-      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      // Legacy comments without uid cannot be client-deleted (no ownership proof).
+      allow delete: if signedIn()
+        && resource.data.keys().hasAll(['uid'])
+        && resource.data.uid == request.auth.uid;
     }
 
-    // ---- visits: locked (legacy client writer must be removed before deploy) ----
+    // ---- visits: locked (client writer removed in Phase 2) ----
     match /visits/{visitId} {
       allow read, write: if false;
     }
 
-    // Deny everything else
     match /{document=**} {
       allow read, write: if false;
     }

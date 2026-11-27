@@ -1371,6 +1371,7 @@
 
         var myIds = {};
         var myNickname = "";
+        var myUid = "";
 
         /* ---- Firebase (public web config — protection is the Firestore rules, not secrecy) ---- */
         var firebaseConfig = {
@@ -1392,9 +1393,10 @@
             db = firebase.firestore();
             var auth = firebase.auth();
             authReady = auth.signInAnonymously().then(function () { return auth.currentUser; });
-            authReady.then(function () {
+            authReady.then(function (user) {
               ready = true;
-              setStatus("You're in — no login needed. Post as your nickname.", "ok");
+              if (user && user.uid) myUid = user.uid;
+              setStatus("You're in — anonymous session ready. Post as your nickname.", "ok");
             }).catch(function () {
               setStatus("Couldn't start an anonymous session, so posting is paused. Reading still works.", "error");
             });
@@ -1431,7 +1433,9 @@
                   nameEl.className = "comment-name";
                   nameEl.textContent = name;
                   meta.appendChild(nameEl);
-                  if (myIds[doc.id] || (myNickname && name === myNickname && myIds.__pending === name)) {
+                  var isMine = myIds[doc.id] || (myUid && data.uid === myUid) ||
+                    (myNickname && name === myNickname && myIds.__pending === name);
+                  if (isMine) {
                     var badge = document.createElement("span");
                     badge.className = "you-badge";
                     badge.textContent = "You";
@@ -1484,14 +1488,25 @@
           postBtn.textContent = "Posting…";
           setStatus("Posting your comment…", "");
           authReady.then(function () {
+            var auth = firebase.auth();
+            var user = auth.currentUser;
+            if (!user) {
+              throw new Error("not-signed-in");
+            }
             return db.collection("comments").add({
+              uid: user.uid,
               nickname: nickname,
               text: text,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              hidden: false
             });
           }).then(function (ref) {
             if (ref && ref.id) myIds[ref.id] = true;
             myNickname = nickname;
+            try {
+              var u = firebase.auth().currentUser;
+              if (u && u.uid) myUid = u.uid;
+            } catch (e) {}
             commentInput.value = "";
             refreshPreview();
             setStatus("Posted — your comment is live below for everyone to see.", "ok");
@@ -1505,56 +1520,19 @@
       })();
     </script>
     <script>
+      /* Phase 2: visits client writes frozen (privacy/abuse). Do not re-enable
+         without App Check + server-side throttling. session marker kept locally only. */
       (function () {
         try {
           var KEY = "dtye_visit_session_id";
-          var sessionId = null;
-          try { sessionId = sessionStorage.getItem(KEY); } catch (e) { return; }
-          if (sessionId) return;
+          if (sessionStorage.getItem(KEY)) return;
+          var sessionId = "local-" + Date.now().toString(36);
           try {
             if (window.crypto && typeof window.crypto.randomUUID === "function") {
               sessionId = window.crypto.randomUUID();
-            } else if (window.crypto && typeof window.crypto.getRandomValues === "function") {
-              var buf = new Uint8Array(16);
-              window.crypto.getRandomValues(buf);
-              sessionId = Array.prototype.map.call(buf, function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
-            } else {
-              sessionId = "s-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + "-" + Math.random().toString(36).slice(2);
             }
-          } catch (e) {
-            sessionId = "s-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
-          }
-          try { sessionStorage.setItem(KEY, sessionId); } catch (e) { return; }
-          if (typeof firebase === "undefined" || !firebase.firestore || !firebase.auth) return;
-          var written = false;
-          function writeVisit() {
-            if (written) return;
-            written = true;
-            try {
-              var db = firebase.firestore();
-              var w = 0, h = 0;
-              try { w = window.screen ? window.screen.width || 0 : 0; h = window.screen ? window.screen.height || 0 : 0; } catch (e) {}
-              db.collection("visits").add({
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                sessionId: sessionId,
-                userAgent: navigator.userAgent || "",
-                language: navigator.language || "",
-                referrer: document.referrer || "",
-                screen: w + "x" + h,
-                path: window.location.pathname || "/"
-              }).catch(function () {});
-            } catch (e) {}
-          }
-          try {
-            var auth = firebase.auth();
-            if (auth.currentUser) { writeVisit(); return; }
-            var unsub = auth.onAuthStateChanged(function (user) {
-              if (user) {
-                try { if (typeof unsub === "function") unsub(); } catch (e) {}
-                writeVisit();
-              }
-            });
           } catch (e) {}
+          sessionStorage.setItem(KEY, sessionId);
         } catch (e) {}
       })();
     </script>

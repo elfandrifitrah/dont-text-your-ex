@@ -1,26 +1,59 @@
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { authErrorMessage, signUpWithEmail } from '@/src/lib/auth';
+import { useAuth } from '@/src/providers/AuthProvider';
 
 export default function SignUpScreen() {
   const c = Colors[useColorScheme()];
+  const { isAnonymous } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(
-    'Stub only — Phase 2 wires createUserWithEmailAndPassword + users/{uid}.',
+    isAnonymous
+      ? 'You are a guest — creating an account will upgrade this session (same uid).'
+      : '',
   );
+
+  async function onSignUp() {
+    setBusy(true);
+    setStatus('');
+    try {
+      await signUpWithEmail(email, password, displayName);
+      router.replace('/(tabs)');
+    } catch (err) {
+      setStatus(authErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <View style={[styles.wrap, { backgroundColor: c.background }]}>
+      <Text style={[styles.label, { color: c.textMuted }]}>Display name (optional)</Text>
+      <TextInput
+        value={displayName}
+        onChangeText={setDisplayName}
+        maxLength={40}
+        placeholder="How comments may know you"
+        placeholderTextColor={c.textMuted}
+        style={[
+          styles.input,
+          { color: c.text, backgroundColor: c.surface, borderColor: c.line },
+        ]}
+      />
       <Text style={[styles.label, { color: c.textMuted }]}>Email</Text>
       <TextInput
         autoCapitalize="none"
@@ -49,16 +82,21 @@ export default function SignUpScreen() {
         ]}
       />
       <Pressable
-        style={[styles.primary, { backgroundColor: c.accent }]}
-        onPress={() =>
-          setStatus(
-            'Account creation is stubbed. Magic-link option can land alongside password auth.',
-          )
-        }
+        style={[styles.primary, { backgroundColor: c.accent, opacity: busy ? 0.7 : 1 }]}
+        onPress={onSignUp}
+        disabled={busy}
       >
-        <Text style={styles.primaryLabel}>Create account</Text>
+        {busy ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.primaryLabel}>
+            {isAnonymous ? 'Upgrade & create account' : 'Create account'}
+          </Text>
+        )}
       </Pressable>
-      <Text style={[styles.status, { color: c.textMuted }]}>{status}</Text>
+      {status ? (
+        <Text style={[styles.status, { color: c.textMuted }]}>{status}</Text>
+      ) : null}
       <Link href="/(auth)/sign-in" style={{ marginTop: 8 }}>
         <Text style={{ color: c.accent, fontWeight: '600' }}>
           Already have an account? Sign in
@@ -83,6 +121,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   primaryLabel: { color: '#fff', fontWeight: '700', fontSize: 16 },
   status: { fontSize: 13, lineHeight: 18, marginTop: 8 },
