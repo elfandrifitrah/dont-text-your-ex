@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Don't Text Your Ex",
+    "slug": "dont-text-your-ex",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "donttextyourex",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.donttextyourex.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f7f4ef",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.donttextyourex.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#f7f4ef"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "firebaseApiKey": "",
+      "firebaseAuthDomain": "dont-text-your-ex.firebaseapp.com",
+      "firebaseProjectId": "dont-text-your-ex",
+      "firebaseStorageBucket": "dont-text-your-ex.firebasestorage.app",
+      "firebaseMessagingSenderId": "",
+      "firebaseAppId": ""
+    }
+  }
+}
