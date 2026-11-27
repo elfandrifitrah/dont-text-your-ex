@@ -41,12 +41,12 @@
       "typedRoutes": true
     },
     "extra": {
-      "firebaseApiKey": "",
+      "firebaseApiKey": "AIzaSyADgu7agIhlfTu3c0IAgK_k8uf55xCXl2s",
       "firebaseAuthDomain": "dont-text-your-ex.firebaseapp.com",
       "firebaseProjectId": "dont-text-your-ex",
       "firebaseStorageBucket": "dont-text-your-ex.firebasestorage.app",
-      "firebaseMessagingSenderId": "",
-      "firebaseAppId": ""
+      "firebaseMessagingSenderId": "513866182205",
+      "firebaseAppId": "1:513866182205:web:865bee33b150ee27a08454"
     }
   }
 }

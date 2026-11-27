@@ -1,14 +1,31 @@
-import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Link, router } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { isFirebaseConfigured } from '@/src/lib/firebase';
+import { authErrorMessage, continueAsGuest } from '@/src/lib/auth';
 import { CRISIS_COPY } from '@/src/lib/crisis';
+import { useAuth } from '@/src/providers/AuthProvider';
 
 export default function WelcomeScreen() {
   const c = Colors[useColorScheme()];
-  const configured = isFirebaseConfigured();
+  const { configured, user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+
+  async function onGuest() {
+    setBusy(true);
+    setStatus('');
+    try {
+      await continueAsGuest();
+      router.replace('/(tabs)');
+    } catch (err) {
+      setStatus(authErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <View style={[styles.wrap, { backgroundColor: c.background }]}>
@@ -17,14 +34,19 @@ export default function WelcomeScreen() {
         A 30-day no-contact coach. Save your streak across phone and web.
       </Text>
       <Text style={[styles.body, { color: c.textMuted }]}>
-        Phase 1 stubs — wiring to Firebase Auth lands in Phase 2. Guest mode will
-        use anonymous auth with optional email upgrade for comments and sync.
+        Sign in to sync vault and streak later. Guests can post comments; upgrade
+        anytime to keep the same account id.
       </Text>
 
       {!configured ? (
         <Text style={[styles.warn, { color: c.accentDeep }]}>
-          Firebase env not set yet. Copy `.env.example` → `.env` with your
-          restricted web config before enabling live auth.
+          Firebase config missing. Check app.json extra / EXPO_PUBLIC_FIREBASE_*.
+        </Text>
+      ) : null}
+
+      {user ? (
+        <Text style={[styles.body, { color: c.textMuted }]}>
+          Signed in{user.isAnonymous ? ' as guest' : ''}. You can return to Today.
         </Text>
       ) : null}
 
@@ -40,16 +62,26 @@ export default function WelcomeScreen() {
           </Text>
         </Pressable>
       </Link>
-      <Pressable
-        style={styles.guest}
-        onPress={() => {
-          // Stub: Phase 2 calls signInAnonymously() then router.replace('/(tabs)')
-        }}
-      >
-        <Text style={[styles.guestLabel, { color: c.textMuted }]}>
-          Continue as guest (stub)
-        </Text>
+      <Pressable style={styles.guest} onPress={onGuest} disabled={busy}>
+        {busy ? (
+          <ActivityIndicator color={c.accent} />
+        ) : (
+          <Text style={[styles.guestLabel, { color: c.textMuted }]}>
+            Continue as guest
+          </Text>
+        )}
       </Pressable>
+      {user ? (
+        <Pressable onPress={() => router.replace('/(tabs)')}>
+          <Text style={{ color: c.accent, fontWeight: '600', textAlign: 'center' }}>
+            Back to Today
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {status ? (
+        <Text style={[styles.warn, { color: c.accentDeep }]}>{status}</Text>
+      ) : null}
 
       <Text style={[styles.crisis, { color: c.crisis }]}>{CRISIS_COPY}</Text>
     </View>
@@ -76,7 +108,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   secondaryLabel: { fontWeight: '600', fontSize: 16 },
-  guest: { paddingVertical: 12, alignItems: 'center' },
+  guest: { paddingVertical: 12, alignItems: 'center', minHeight: 44 },
   guestLabel: { fontSize: 15, fontWeight: '600' },
   crisis: { marginTop: 20, fontSize: 11, lineHeight: 16 },
 });

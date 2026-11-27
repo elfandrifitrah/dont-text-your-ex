@@ -38,9 +38,9 @@ The first days after a breakup are the hardest — usually around 2am, when the 
 
 ## 💬 Leave feedback — right in the demo
 
-Anyone can leave critique, advice or ideas on the live demo. No login needed: pick a nickname, write your thought, post it. Every commenter gets their own colour and initials, so you can tell people apart at a glance, and your own posts show up marked as you. Comments appear live for everyone.
+Anyone can leave critique, advice or ideas on the live demo. No account UI: the page signs in anonymously, you pick a nickname, and posts include your Firebase `uid` for ownership. Every commenter gets their own colour and initials; your own posts show up marked as you. Comments appear live for everyone.
 
-Powered by Firebase (Firestore + anonymous sign-in) on the free Spark plan. The API key in the page is a public web key by design — it is restricted to the four Firebase APIs this app needs, and the database rules only allow public reads and validated anonymous posts.
+Powered by Firebase (Firestore + anonymous auth) on the free Spark plan. The API key in the page is a public web key by design — protect the project with Firestore rules, Auth settings, and API key restrictions (not secrecy).
 
 ## Price concept
 
@@ -60,17 +60,32 @@ Open `index.html` in a browser, or visit the live demo linked above.
 
 ### Multiplatform upgrade (in progress)
 
-Expo (React Native) app for **web + iOS + Android** lives in `apps/mobile/`. Firestore security rules live in `firebase/`. The static GitHub Pages demo at the repo root stays until an explicit cutover.
+Expo (React Native) app for **web + iOS + Android** lives in `apps/mobile/` (email/password + guest auth, comments with `uid`). Firestore rules live in `firebase/`. Root `index.html` remains the GitHub Pages demo.
 
 ```bash
 cd apps/mobile
-cp .env.example .env   # fill EXPO_PUBLIC_FIREBASE_* (restricted web config)
+cp .env.example .env   # optional override; public demo config is already in app.json
 npm install
 npx expo start
 ```
 
-End-to-end plan (architecture, security, phased roadmap): see the Project doc  
-`/cursor/stores/self/docs/end-to-end-plan.md` (also linked from the upgrade PR).
+End-to-end plan: `/cursor/stores/self/docs/end-to-end-plan.md`
+
+### Firebase Console deploy (manual — not done by CI)
+
+After this repo’s Phase 2 changes are live on GitHub Pages (so `index.html` already writes `comments.uid` and no longer writes `visits`):
+
+1. **Authentication → Sign-in method:** enable **Email/Password**; keep **Anonymous** enabled.
+2. **Authorized domains:** add any Expo web / custom domains you use.
+3. Deploy rules + indexes from the repo:
+
+```bash
+cd firebase
+firebase use dont-text-your-ex
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+Until step 3 runs, the cloud project may still be on older/looser rules. Do **not** deploy the new rules before Pages is serving the updated `index.html`, or comment posts from the live demo will fail.
 
 ## A note
 

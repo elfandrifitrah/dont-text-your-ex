@@ -18,6 +18,7 @@ export default function AuthLayout() {
       <Stack.Screen name="welcome" options={{ title: "Don't Text Your Ex" }} />
       <Stack.Screen name="sign-in" options={{ title: 'Sign in' }} />
       <Stack.Screen name="sign-up" options={{ title: 'Create account' }} />
+      <Stack.Screen name="upgrade" options={{ title: 'Upgrade guest' }} />
     </Stack>
   );
 }
