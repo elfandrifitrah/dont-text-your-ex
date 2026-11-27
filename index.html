@@ -473,7 +473,7 @@
             </div>
             <button class="streak-chip" id="streakChip" type="button" aria-label="Your no-contact streak">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.9 2.3c.3-.4 1-.2 1 .3.4 3.2 1.7 5 3 6.6 1.2 1.5 2.3 3 2.3 5.3a7.2 7.2 0 1 1-14.4 0c0-2 1-3.6 2-5.1.4-.6 1.2-.4 1.4.2.3 1 .9 1.8 1.7 2.2-.3-2.8.6-6 3-9.5z"/></svg>
-              <span class="tnum" id="streakChipNum">6 days</span>
+              <span class="tnum" id="streakChipNum">1 day</span>
             </button>
           </header>
 
@@ -495,10 +495,10 @@
               <div class="card">
                 <p class="kicker">No-contact streak</p>
                 <div class="streak-hero">
-                  <div class="streak-num tnum"><span id="dayNum">6</span><small> / 30 days</small></div>
+                  <div class="streak-num tnum"><span id="dayNum">1</span><small> / 30 days</small></div>
                 </div>
-                <div class="progress" role="progressbar" aria-label="Plan progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="6" id="planProgress"><i style="--p:0.2"></i></div>
-                <p style="margin-top:12px" id="streakLine">Six days of not reopening the wound. The urge peaks at night — that's what the SOS check is for.</p>
+                <div class="progress" role="progressbar" aria-label="Plan progress" aria-valuemin="0" aria-valuemax="30" aria-valuenow="1" id="planProgress"><i style="--p:0.033"></i></div>
+                <p style="margin-top:12px" id="streakLine">Day one is the hardest signature you'll ever write. The SOS check exists for tonight.</p>
               </div>
 
               <div class="card">
@@ -513,9 +513,9 @@
               </div>
 
               <div class="card">
-                <p class="kicker">Today's focus · Day <span id="focusDay">6</span></p>
-                <h2 id="focusTitle">Delete the thread, keep the lesson</h2>
-                <p id="focusBody">Archive the chat so it stops ambushing you. If you need the facts later, they're in your notes — not one tap away at 1am.</p>
+                <p class="kicker">Today's focus · Day <span id="focusDay">1</span></p>
+                <h2 id="focusTitle">Mute everything</h2>
+                <p id="focusBody">Mute — don't just unfollow — their accounts and their closest friends'. Out of sight is not childish; it's strategy.</p>
               </div>
 
               <div class="card">
@@ -672,7 +672,7 @@
                 <div class="empty" id="vaultEmpty">
                   <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
                   <h3>Nothing here yet — good</h3>
-                  <p>The next 2am draft belongs in this vault, not in their messages. Letters you save stay on this screen only.</p>
+                  <p>The next 2am draft belongs in this vault, not in their messages. Letters stay in this browser, so a refresh does not throw them away.</p>
                 </div>
               </div>
               <div class="card art-card">
@@ -851,17 +851,39 @@
         var $ = function (s, r) { return (r || document).querySelector(s); };
         var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
-        /* ---------------- State (in-memory only; nothing persists) ---------------- */
+        /* ---------------- State (this browser only; survives refresh) ---------------- */
         var state = {
-          day: 6,
+          day: 1,
+          planStartDate: null,
+          holdAnchor: false,
           ended: null,
           triggers: [],
+          mood: null,
+          moodDate: null,
           freeUsed: false,
           unlocked: false,
           letters: [],
           lastDraft: "",
           lastRewritten: ""
         };
+        function todayISO(d) {
+          d = d || new Date();
+          return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+        function parseISODate(iso) {
+          var p = String(iso).split("-");
+          return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+        }
+        function addDaysISO(iso, n) {
+          var d = parseISODate(iso);
+          d.setDate(d.getDate() + n);
+          return todayISO(d);
+        }
+        function dayFromAnchor(anchor) {
+          var diff = Math.round((parseISODate(todayISO()).getTime() - parseISODate(anchor).getTime()) / 86400000);
+          if (!isFinite(diff)) return 1;
+          return Math.max(1, Math.min(30, diff + 1));
+        }
 
         /* ---------------- Plan data ---------------- */
         var weeks = [
@@ -956,6 +978,9 @@
         /* ---------------- Streak / day ---------------- */
         function setDay(d) {
           state.day = Math.max(1, Math.min(30, d));
+          if (!state.holdAnchor) {
+            state.planStartDate = addDaysISO(todayISO(), -(state.day - 1));
+          }
           $("#dayNum").textContent = state.day;
           $("#focusDay").textContent = state.day;
           $("#streakChipNum").textContent = state.day + (state.day === 1 ? " day" : " days");
@@ -971,6 +996,7 @@
           renderPlan(Math.floor((state.day - 1) / 7));
           var phaseIdx = Math.min(3, Math.floor((state.day - 1) / 7));
           $$(".phases li").forEach(function (li, i) { li.classList.toggle("now", i === phaseIdx); });
+          persist();
         }
 
         /* ---------------- Plan rendering ---------------- */
@@ -1024,6 +1050,9 @@
             var reply = moodReplies[label];
             if (label === "Heavy") reply = "Heavy is normal — let the plan carry you today. One small task from today's focus is enough.";
             $("#moodReply").textContent = reply;
+            state.mood = label;
+            state.moodDate = todayISO();
+            persist();
           });
         });
 
@@ -1058,6 +1087,7 @@
             $("#intakeSummary").textContent = "Tuned to your situation — " + bits.join("; ") + ". Reopen this any time to adjust.";
             $("#planPersonal").textContent = " — shaped by your intake (" + bits.join("; ") + ").";
           }
+          persist();
           closeSheets();
           toast("Plan updated. Day " + state.day + " starts now.");
         });
@@ -1173,8 +1203,10 @@
                  d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
         }
         function addLetter(body, source) {
-          state.letters.unshift({ body: body, when: new Date(), source: source, open: false });
+          state.letters.unshift({ body: String(body).slice(0, 10000), when: new Date(), source: source, open: false });
+          if (state.letters.length > 80) state.letters.length = 80;
           renderLetters();
+          persist();
         }
         function renderLetters() {
           var list = $("#letterList");
@@ -1190,7 +1222,7 @@
               '<button class="mini-btn" type="button" data-act="delete">Delete</button></div>';
             div.querySelector('[data-act="toggle"]').addEventListener("click", function () { L.open = !L.open; renderLetters(); });
             div.querySelector('[data-act="delete"]').addEventListener("click", function () {
-              state.letters.splice(idx, 1); renderLetters(); toast("Letter deleted.");
+              state.letters.splice(idx, 1); renderLetters(); persist(); toast("Letter deleted.");
             });
             list.appendChild(div);
           });
@@ -1276,6 +1308,7 @@
             btn.addEventListener("click", function () {
               adminDone[i] = !adminDone[i];
               renderAdmin();
+              persist();
             });
             li.appendChild(btn);
             ul.appendChild(li);
@@ -1293,8 +1326,87 @@
           } else { toast("Long-press the script to copy it."); }
         });
 
+        function readSaved() {
+          try {
+            var raw = localStorage.getItem("dtye-progress-v1");
+            if (!raw) return null;
+            var data = JSON.parse(raw);
+            return data && typeof data === "object" ? data : null;
+          } catch (e) { return null; }
+        }
+        function persist() {
+          if (!Array.isArray(adminDone)) return;
+          try {
+            localStorage.setItem("dtye-progress-v1", JSON.stringify({
+              planStartDate: state.planStartDate,
+              ended: state.ended,
+              triggers: state.triggers,
+              letters: state.letters.slice(0, 80).map(function (L) {
+                return {
+                  body: String(L.body || "").slice(0, 10000),
+                  source: String(L.source || "Vault").slice(0, 80),
+                  when: L.when instanceof Date ? L.when.toISOString() : String(L.when || "")
+                };
+              }),
+              adminDone: adminDone.slice(),
+              mood: state.mood,
+              moodDate: state.moodDate
+            }));
+          } catch (e) {}
+        }
+        function restoreProgress() {
+          var saved = readSaved();
+          if (saved && Array.isArray(saved.letters)) {
+            state.letters = saved.letters.filter(function (L) {
+              return L && typeof L.body === "string" && L.body.trim();
+            }).slice(0, 80).map(function (L) {
+              var when = new Date(L.when);
+              return {
+                body: L.body.slice(0, 10000),
+                source: typeof L.source === "string" ? L.source.slice(0, 80) : "Vault",
+                when: isNaN(when.getTime()) ? new Date() : when,
+                open: false
+              };
+            });
+          }
+          if (saved && typeof saved.ended === "string") state.ended = saved.ended.slice(0, 40);
+          if (saved && Array.isArray(saved.triggers)) {
+            state.triggers = saved.triggers.filter(function (t) { return typeof t === "string"; }).slice(0, 8);
+          }
+          if (saved && Array.isArray(saved.adminDone) && saved.adminDone.length === adminDone.length) {
+            saved.adminDone.forEach(function (v, i) { adminDone[i] = !!v; });
+          }
+          var anchor = saved && typeof saved.planStartDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(saved.planStartDate)
+            ? saved.planStartDate
+            : todayISO();
+          state.holdAnchor = true;
+          state.planStartDate = anchor;
+          setDay(dayFromAnchor(anchor));
+          state.holdAnchor = false;
+          renderLetters();
+          renderAdmin();
+          if (saved && saved.moodDate === todayISO() && moodReplies[saved.mood]) {
+            state.mood = saved.mood;
+            state.moodDate = saved.moodDate;
+            $$("#moodChips .chip").forEach(function (chip) {
+              chip.setAttribute("aria-pressed", chip.textContent.trim() === saved.mood ? "true" : "false");
+            });
+            var reply = moodReplies[saved.mood];
+            if (saved.mood === "Heavy") reply = "Heavy is normal — let the plan carry you today. One small task from today's focus is enough.";
+            $("#moodReply").textContent = reply;
+          }
+          var bits = [];
+          if (state.ended) bits.push(state.ended.toLowerCase());
+          if (state.triggers.length) bits.push("your triggers: " + state.triggers.join(", "));
+          if (bits.length) {
+            $("#intakeSummary").textContent = "Tuned to your situation — " + bits.join("; ") + ". Reopen this any time to adjust.";
+            $("#planPersonal").textContent = " — shaped by your intake (" + bits.join("; ") + ").";
+          }
+          persist();
+        }
+
         /* ---------------- Init ---------------- */
-        setDay(6);
+        restoreProgress();
         updateFreeNotes();
       })();
     </script>

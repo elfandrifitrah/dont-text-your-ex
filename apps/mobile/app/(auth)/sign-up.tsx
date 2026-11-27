@@ -6,7 +6,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -16,7 +16,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState(
-    'Stub only — Phase 2 wires createUserWithEmailAndPassword + users/{uid}.',
+    'Accounts are not connected yet. Progress already stays on this device without one.',
   );
 
   return (
@@ -52,7 +52,7 @@ export default function SignUpScreen() {
         style={[styles.primary, { backgroundColor: c.accent }]}
         onPress={() =>
           setStatus(
-            'Account creation is stubbed. Magic-link option can land alongside password auth.',
+            'Not connected yet. Continue on this device from the previous screen — nothing you save is lost on refresh.',
           )
         }
       >
@@ -64,6 +64,13 @@ export default function SignUpScreen() {
           Already have an account? Sign in
         </Text>
       </Link>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        style={{ marginTop: 16 }}
+      >
+        <Text style={{ color: c.text, fontWeight: '700' }}>Back to today</Text>
+      </Pressable>
     </View>
   );
 }

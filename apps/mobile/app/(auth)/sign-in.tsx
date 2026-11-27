@@ -6,7 +6,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -16,7 +16,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState(
-    'Stub only — Phase 2 wires signInWithEmailAndPassword.',
+    'Cross-device sign-in is not connected yet. Your day already saves on this device.',
   );
 
   return (
@@ -52,7 +52,7 @@ export default function SignInScreen() {
         style={[styles.primary, { backgroundColor: c.accent }]}
         onPress={() =>
           setStatus(
-            'Not connected yet. After Phase 2 this signs in and opens Today.',
+            'Not connected yet. Use Continue on this device — the streak and vault are already saved here.',
           )
         }
       >
@@ -64,6 +64,13 @@ export default function SignInScreen() {
           Need an account? Sign up
         </Text>
       </Link>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        style={{ marginTop: 16 }}
+      >
+        <Text style={{ color: c.text, fontWeight: '700' }}>Back to today</Text>
+      </Pressable>
     </View>
   );
 }
