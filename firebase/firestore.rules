@@ -1,0 +1,127 @@
+rules_version = '2';
+
+// Don't Text Your Ex — Phase 1 rules (review before deploy).
+// Deny by default. No privileged/admin client paths.
+// Deploy: firebase deploy --only firestore:rules (from repo, with project access).
+//
+// WARNING: Deploying these rules will break the legacy index.html comment/visit
+// writers until that page is updated to send `uid` and stop writing `visits`.
+// Coordinate demo cutover (Phase 2) before production deploy.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isString(v) {
+      return v is string;
+    }
+
+    function stringInRange(v, minLen, maxLen) {
+      return isString(v) && v.size() >= minLen && v.size() <= maxLen;
+    }
+
+    function onlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    // ---- users/{uid} ----
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && onlyKeys(['displayName', 'createdAt', 'planStartDate', 'currentDay', 'intake', 'settings', 'updatedAt'])
+        && (!('displayName' in request.resource.data)
+            || stringInRange(request.resource.data.displayName, 0, 40))
+        && (!('currentDay' in request.resource.data)
+            || (request.resource.data.currentDay is int
+                && request.resource.data.currentDay >= 1
+                && request.resource.data.currentDay <= 30));
+      allow update: if isOwner(uid)
+        && onlyKeys(['displayName', 'createdAt', 'planStartDate', 'currentDay', 'intake', 'settings', 'updatedAt'])
+        && (!('displayName' in request.resource.data)
+            || stringInRange(request.resource.data.displayName, 0, 40))
+        && (!('currentDay' in request.resource.data)
+            || (request.resource.data.currentDay is int
+                && request.resource.data.currentDay >= 1
+                && request.resource.data.currentDay <= 30))
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      match /checkIns/{dateId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.uid == uid
+          && stringInRange(request.resource.data.date, 8, 32)
+          && stringInRange(request.resource.data.mood, 1, 32);
+        allow delete: if isOwner(uid);
+      }
+
+      match /checklist/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ---- vaultLetters/{letterId} ----
+    match /vaultLetters/{letterId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && onlyKeys(['uid', 'body', 'source', 'createdAt', 'updatedAt'])
+        && stringInRange(request.resource.data.body, 1, 10000)
+        && stringInRange(request.resource.data.source, 1, 80);
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && onlyKeys(['uid', 'body', 'source', 'createdAt', 'updatedAt'])
+        && stringInRange(request.resource.data.body, 1, 10000)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---- checklistProgress/{uid} (flat alt to users/{uid}/checklist) ----
+    match /checklistProgress/{uid} {
+      allow read, write: if isOwner(uid)
+        && request.resource.data.uid == uid;
+    }
+
+    // ---- comments/{commentId} ----
+    // Public read for the demo feed. Create requires auth + uid ownership + length limits.
+    match /comments/{commentId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && onlyKeys(['uid', 'nickname', 'text', 'createdAt', 'hidden'])
+        && request.resource.data.uid == request.auth.uid
+        && stringInRange(request.resource.data.nickname, 1, 30)
+        && stringInRange(request.resource.data.text, 1, 1000)
+        && (!('hidden' in request.resource.data) || request.resource.data.hidden == false);
+
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && onlyKeys(['uid', 'nickname', 'text', 'createdAt', 'hidden'])
+        && stringInRange(request.resource.data.nickname, 1, 30)
+        && stringInRange(request.resource.data.text, 1, 1000)
+        && request.resource.data.createdAt == resource.data.createdAt
+        // Clients cannot flip hidden (moderation is admin/server-only later)
+        && request.resource.data.hidden == resource.data.get('hidden', false);
+
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---- visits: locked (legacy client writer must be removed before deploy) ----
+    match /visits/{visitId} {
+      allow read, write: if false;
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

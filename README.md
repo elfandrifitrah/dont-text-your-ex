@@ -48,15 +48,29 @@ Powered by Firebase (Firestore + anonymous sign-in) on the free Spark plan. The 
 
 ## How it's built
 
-One static HTML file. No build step, no backend, no tracking, no database of its own.
+**Live demo (unchanged):** one static HTML file on GitHub Pages. No build step for that path.
 
 | Piece | Service | Cost |
 |---|---|---|
-| The page | GitHub Pages | $0 |
+| The page | GitHub Pages (`index.html`) | $0 |
 | Live comments | Firebase (Firestore + anonymous auth) | $0 — Spark plan |
 | Code | This repo | $0 |
 
 Open `index.html` in a browser, or visit the live demo linked above.
+
+### Multiplatform upgrade (in progress)
+
+Expo (React Native) app for **web + iOS + Android** lives in `apps/mobile/`. Firestore security rules live in `firebase/`. The static GitHub Pages demo at the repo root stays until an explicit cutover.
+
+```bash
+cd apps/mobile
+cp .env.example .env   # fill EXPO_PUBLIC_FIREBASE_* (restricted web config)
+npm install
+npx expo start
+```
+
+End-to-end plan (architecture, security, phased roadmap): see the Project doc  
+`/cursor/stores/self/docs/end-to-end-plan.md` (also linked from the upgrade PR).
 
 ## A note
 

@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Expo / mobile
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+apps/mobile/expo-env.d.ts
+apps/mobile/ios/
+apps/mobile/android/
+
+# Env (keep .env.example)
+.env
+.env*.local
+apps/mobile/.env
+
+# OS / tooling
+.DS_Store
+*.log
+*.tsbuildinfo
+.firebase/
